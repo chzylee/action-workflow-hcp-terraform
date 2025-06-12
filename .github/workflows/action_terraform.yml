@@ -1,0 +1,131 @@
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment to which code will be deployed
+        required: true
+        type: string
+      tfcode_path:
+        description: Terraform code dir path
+        required: true
+        type: string
+      tfc_organization:
+        description: Terraform organization name
+        required: true
+        type: string
+      tfc_hostname:
+        description: Terraform host name
+        required: true
+        type: string
+      tfc_workspace:
+        description: Terraform workspace name
+        required: true
+        type: string
+
+    secrets:
+      TF_API_TOKEN:
+        required: true
+
+# Permission can be added at job level or workflow level
+permissions:
+  contents: write # This is required for actions/checkout and tag creation
+
+# Based on tutorial at https://www.hashicorp.com/en/blog/automate-aws-deployments-with-hcp-terraform-and-github-actions
+jobs:
+  aws_tfc_job:
+    name: Create AWS Infra Using TFC
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tf code in runner environment
+        uses: actions/checkout@v3.5.2
+
+      # Configure HCP Terraform API token, since we are using remote backend option of HCP Terraform in AWS code
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v2.0.2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      # Add the AWS Creds as ENV variable in HCP Terraform workspace, since the tf run happens in HCP Terraform environment
+
+      # Invoke the Terraform commands
+      - name: Terraform init and validate
+        run: |
+          echo `pwd`
+          echo "** Running Terraform Init**"
+          terraform init
+
+          echo "** Running Terraform Validate**"
+          terraform validate
+        working-directory: ${{ inputs.tfcode_path }}
+
+      - name: Upload Configuration
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.0
+        id: plan-upload
+        with:
+          token: ${{ secrets.TF_API_TOKEN }}
+          hostname: ${{ inputs.tfc_hostname }}
+          organization: ${{ inputs.tfc_organization }}
+          workspace: ${{ inputs.tfc_workspace }}
+          directory: ${{ inputs.tfcode_path }}
+          speculative: true
+
+      - name: Terraform Plan
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.0
+        id: run
+        with:
+          token: ${{ secrets.TF_API_TOKEN }}
+          hostname: ${{ inputs.tfc_hostname }}
+          organization: ${{ inputs.tfc_organization }}
+          workspace: ${{ inputs.tfc_workspace }}
+          plan_only: true
+          message: 'Plan Run from GitHub Actions'
+          configuration_version: ${{ steps.plan-upload.outputs.configuration_version_id }}
+
+      - name: Terraform Plan Output
+        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.0
+        id: plan-output
+        with:
+          hostname: ${{ inputs.tfc_hostname }}
+          token: ${{ secrets.TF_API_TOKEN }}
+          organization: ${{ inputs.tfc_organization }}
+          plan: ${{ steps.run.outputs.plan_id }}
+
+      - name: Reference Plan Output
+        run: |
+          echo "Plan status: ${{ steps.plan-output.outputs.plan_status }}"
+          echo "Resources to Add: ${{ steps.plan-output.outputs.add }}"
+          echo "Resources to Change: ${{ steps.plan-output.outputs.change }}"
+          echo "Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}"
+
+  # Once the user verifies the Terraform Plan, the user can run the Terraform Apply and Destroy commands
+  apply_terraform_plan:
+    needs: aws_tfc_job
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.5.2
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v2.0.2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      # Invoke the Terraform commands
+      - name: Terraform init and validate
+        run: |
+          echo `pwd`
+          echo "** Running Terraform Init**"
+          terraform init
+
+          echo "** Running Terraform Validate**"
+          terraform validate
+        working-directory: ${{ inputs.tfcode_path }}
+
+      - name: Terraform Apply
+        run: echo "** Running Terraform Apply**"; terraform apply -auto-approve
+        working-directory: ${{ inputs.tfcode_path }}
+      - name: Terraform Destroy
+        run: echo "** Running Terraform Destroy**"; terraform destroy -auto-approve
+        working-directory: ${{ inputs.tfcode_path }}
