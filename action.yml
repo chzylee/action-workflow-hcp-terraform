@@ -1,9 +1,6 @@
 name: 'Setup Terraform and Deploy via HCP Terraform'
 description: 'Composite action to run Terraform operations using HCP Terraform'
 inputs:
-  environment:
-    description: 'Environment to which code will be deployed'
-    required: true
   tfcode_path:
     description: 'Terraform code dir path'
     required: true
