@@ -89,6 +89,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        organization: ${{ inputs.tfc_organization }}
         plan: ${{ steps.create-run.outputs.plan_id }}
 
     - name: Debug Run Context
@@ -103,4 +104,5 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        organization: ${{ inputs.tfc_organization }}
         run: ${{ steps.create-run.outputs.run_id }}
