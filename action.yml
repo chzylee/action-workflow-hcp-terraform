@@ -9,6 +9,9 @@ inputs:
   tfc_organization:
     description: 'HCP Terraform organization name'
     required: true
+  tfc_project_id:
+    description: 'HCP Terraform project ID'
+    required: true
   tfc_workspace:
     description: 'HCP Terraform workspace name'
     required: true
@@ -29,6 +32,7 @@ runs:
         TFC_ORG: ${{ inputs.tfc_organization }}
         TFC_WORKSPACE: ${{ inputs.tfc_workspace }}
         TFC_TOKEN: ${{ inputs.tfc_token }}
+        TFC_PROJECT_ID: ${{ inputs.tfc_project }}
       run: |
         echo "Checking if workspace '$TFC_WORKSPACE' exists in org '$TFC_ORG'..."
 
@@ -48,6 +52,14 @@ runs:
                 "type": "workspaces",
                 "attributes": {
                   "name": "'"$TFC_WORKSPACE"'"
+                },
+                "relationships": {
+                  "project": {
+                    "data": {
+                      "id": "'"$TFC_PROJECT_ID"'",
+                      "type": "projects"
+                    }
+                  }
                 }
               }
             }' \
