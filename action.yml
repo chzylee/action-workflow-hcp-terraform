@@ -2,6 +2,10 @@ name: 'HCP Terraform Run'
 description: 'Trigger an HCP Terraform run using official HashiCorp GitHub Actions'
 
 inputs:
+  tfc_hostname:
+    description: 'HCP Terraform hostname (default: https://app.terraform.io)'
+    required: false
+    default: 'https://app.terraform.io'
   tfc_organization:
     description: 'HCP Terraform organization name'
     required: true
@@ -25,8 +29,9 @@ runs:
     - name: Upload Terraform Configuration
       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
-        workspace: ${{ inputs.tfc_workspace }}
+        tfc_hostname: ${{ inputs.tfc_hostname }}
         organization: ${{ inputs.tfc_organization }}
+        workspace: ${{ inputs.tfc_workspace }}
         path: ${{ inputs.terraform_directory }}
         token: ${{ inputs.tfc_token }}
 
@@ -34,14 +39,16 @@ runs:
       id: create-run
       uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
       with:
-        workspace: ${{ inputs.tfc_workspace }}
+        hostname: ${{ inputs.tfc_hostname }}
         organization: ${{ inputs.tfc_organization }}
+        workspace: ${{ inputs.tfc_workspace }}
         message: 'Triggered via GitHub Actions'
         token: ${{ inputs.tfc_token }}
 
     - name: Wait for Plan & Display
       uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
       with:
+        hostname: ${{ inputs.tfc_hostname }}
         plan: ${{ steps.create-run.outputs.plan_id }}
         token: ${{ inputs.tfc_token }}
 
@@ -50,5 +57,6 @@ runs:
       if: steps.create-run.outputs.is_speculative == 'false' && steps.create-run.outputs.is_destroy == 'false'
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
+        hostname: ${{ inputs.tfc_hostname }}
         run: ${{ steps.create-run.outputs.run_id }}
         token: ${{ inputs.tfc_token }}
