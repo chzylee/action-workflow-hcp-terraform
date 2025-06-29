@@ -67,10 +67,10 @@ runs:
     - name: Upload Terraform Configuration
       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
-        tfc_hostname: ${{ inputs.tfc_hostname }}
+        hostname: ${{ inputs.tfc_hostname }}
         organization: ${{ inputs.tfc_organization }}
         workspace: ${{ inputs.tfc_workspace }}
-        path: ${{ inputs.terraform_directory }}
+        directory: ${{ inputs.terraform_directory }}
         token: ${{ inputs.tfc_token }}
 
     - name: Create Terraform Run
