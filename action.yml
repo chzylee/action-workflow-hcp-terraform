@@ -97,6 +97,8 @@ runs:
       run: |
         echo "is_speculative: ${{ steps.create-run.outputs.is_speculative }}"
         echo "is_destroy: ${{ steps.create-run.outputs.is_destroy }}"
+        echo "run_id=${{ steps.create-run.outputs.run_id }}"
+        echo "TF_API_TOKEN is set: ${TF_API_TOKEN:+yes}"
 
     - name: Auto Apply (if not speculative or destroy)
       # Ensure run is not from PR or pre-merge context and not a destroy operation.
