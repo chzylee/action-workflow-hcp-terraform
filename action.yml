@@ -1,75 +1,58 @@
-name: 'Setup Terraform and Deploy via HCP Terraform'
-description: 'Composite action to run Terraform operations using HCP Terraform'
+name: 'HCP Terraform Run'
+description: 'Trigger an HCP Terraform run using official HashiCorp GitHub Actions'
+
 inputs:
-  tfcode_path:
-    description: 'Terraform code dir path'
-    required: true
   tfc_organization:
-    description: 'Terraform organization name'
-    required: true
-  tfc_hostname:
-    description: 'Terraform host name'
+    description: 'HCP Terraform organization name'
     required: true
   tfc_workspace:
-    description: 'Terraform workspace name'
+    description: 'HCP Terraform workspace name'
     required: true
-  TF_API_TOKEN:
-    description: 'Terraform Cloud API token'
+  tfc_token:
+    description: 'HCP Terraform API token'
     required: true
+  terraform_directory:
+    description: 'Path to Terraform configuration'
+    required: false
+    default: '.'
+
 runs:
   using: 'composite'
   steps:
-    - name: Checkout tf code in runner environment
-      uses: actions/checkout@v3.5.2
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Setup Terraform CLI
-      uses: hashicorp/setup-terraform@v2.0.2
+    - name: Upload Terraform Configuration
+      uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
-        cli_config_credentials_token: ${{ inputs.TF_API_TOKEN }}
-
-    - name: Terraform init and validate
-      run: |
-        echo `pwd`
-        echo "** Running Terraform Init**"
-        terraform init
-        echo "** Running Terraform Validate**"
-        terraform validate
-      shell: bash
-      working-directory: ${{ inputs.tfcode_path }}
-
-    - name: Upload Configuration
-      uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.0
-      with:
-        token: ${{ inputs.TF_API_TOKEN }}
-        hostname: ${{ inputs.tfc_hostname }}
-        organization: ${{ inputs.tfc_organization }}
         workspace: ${{ inputs.tfc_workspace }}
-        directory: ${{ inputs.tfcode_path }}
-        speculative: true
-
-    - name: Terraform Plan
-      uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.0
-      with:
-        token: ${{ inputs.TF_API_TOKEN }}
-        hostname: ${{ inputs.tfc_hostname }}
         organization: ${{ inputs.tfc_organization }}
+        path: ${{ inputs.terraform_directory }}
+      env:
+        TFC_TOKEN: ${{ inputs.tfc_token }}
+
+    - name: Create Terraform Run
+      id: create-run
+      uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
+      with:
         workspace: ${{ inputs.tfc_workspace }}
-        plan_only: true
-        message: 'Plan Run from GitHub Actions'
-        configuration_version: ${{ steps.plan-upload.outputs.configuration_version_id }}
-
-    - name: Terraform Plan Output
-      uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.0
-      with:
-        hostname: ${{ inputs.tfc_hostname }}
-        token: ${{ inputs.TF_API_TOKEN }}
         organization: ${{ inputs.tfc_organization }}
-        plan: ${{ steps.run.outputs.plan_id }}
+        message: 'Triggered via GitHub Actions'
+      env:
+        TFC_TOKEN: ${{ inputs.tfc_token }}
 
-    - name: Reference Plan Output
-      run: |
-        echo "Plan status: ${{ steps.plan-output.outputs.plan_status }}"
-        echo "Resources to Add: ${{ steps.plan-output.outputs.add }}"
-        echo "Resources to Change: ${{ steps.plan-output.outputs.change }}"
-        echo "Resources to Destroy: ${{ steps.plan-output.outputs.destroy }}"
-      shell: bash
+    - name: Wait for Plan & Display
+      uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
+      with:
+        run: ${{ steps.create-run.outputs.run_id }}
+      env:
+        TFC_TOKEN: ${{ inputs.tfc_token }}
+
+    - name: Auto Apply (if not speculative or destroy)
+      # Ensure run is not from PR or pre-merge context and not a destroy operation.
+      if: steps.create-run.outputs.is_speculative == 'false' && steps.create-run.outputs.is_destroy == 'false'
+      uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
+      with:
+        run: ${{ steps.create-run.outputs.run_id }}
+      env:
+        TFC_TOKEN: ${{ inputs.tfc_token }}
