@@ -8,13 +8,13 @@ inputs:
   tfc_workspace:
     description: 'HCP Terraform workspace name'
     required: true
-  tfc_token:
-    description: 'HCP Terraform API token'
-    required: true
   terraform_directory:
     description: 'Path to Terraform configuration'
     required: false
     default: '.'
+  tfc_token:
+    description: 'HCP Terraform API token'
+    required: true
 
 runs:
   using: 'composite'
@@ -28,8 +28,7 @@ runs:
         workspace: ${{ inputs.tfc_workspace }}
         organization: ${{ inputs.tfc_organization }}
         path: ${{ inputs.terraform_directory }}
-      env:
-        TFC_TOKEN: ${{ inputs.tfc_token }}
+        token: ${{ inputs.tfc_token }}
 
     - name: Create Terraform Run
       id: create-run
@@ -38,15 +37,13 @@ runs:
         workspace: ${{ inputs.tfc_workspace }}
         organization: ${{ inputs.tfc_organization }}
         message: 'Triggered via GitHub Actions'
-      env:
-        TFC_TOKEN: ${{ inputs.tfc_token }}
+        token: ${{ inputs.tfc_token }}
 
     - name: Wait for Plan & Display
       uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
       with:
-        run: ${{ steps.create-run.outputs.run_id }}
-      env:
-        TFC_TOKEN: ${{ inputs.tfc_token }}
+        plan: ${{ steps.create-run.outputs.plan_id }}
+        token: ${{ inputs.tfc_token }}
 
     - name: Auto Apply (if not speculative or destroy)
       # Ensure run is not from PR or pre-merge context and not a destroy operation.
@@ -54,5 +51,4 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
         run: ${{ steps.create-run.outputs.run_id }}
-      env:
-        TFC_TOKEN: ${{ inputs.tfc_token }}
+        token: ${{ inputs.tfc_token }}
