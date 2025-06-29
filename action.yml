@@ -101,8 +101,6 @@ runs:
         echo "TF_API_TOKEN is set: ${TF_API_TOKEN:+yes}"
 
     - name: Auto Apply (if not speculative or destroy)
-      # Ensure run is not from PR or pre-merge context and not a destroy operation.
-      if: ${{ steps.create-run.outputs.is_speculative != 'true' && steps.create-run.outputs.is_destroy != 'true' }}
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
