@@ -23,6 +23,44 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Ensure HCP Terraform Workspace Exists and Create if Not
+      shell: bash
+      env:
+        TFC_ORG: ${{ inputs.tfc_organization }}
+        TFC_WORKSPACE: ${{ inputs.tfc_workspace }}
+        TFC_TOKEN: ${{ inputs.tfc_token }}
+      run: |
+        echo "Checking if workspace '$TFC_WORKSPACE' exists in org '$TFC_ORG'..."
+
+        response=$(curl -s -o response.json -w "%{http_code}" \
+          --header "Authorization: Bearer $TFC_TOKEN" \
+          --header "Content-Type: application/vnd.api+json" \
+          "https://app.terraform.io/api/v2/organizations/$TFC_ORG/workspaces/$TFC_WORKSPACE")
+
+        if [ "$response" = "404" ]; then
+          echo "Workspace not found. Creating workspace '$TFC_WORKSPACE'..."
+          curl -s \
+            --header "Authorization: Bearer $TFC_TOKEN" \
+            --header "Content-Type: application/vnd.api+json" \
+            --request POST \
+            --data '{
+              "data": {
+                "type": "workspaces",
+                "attributes": {
+                  "name": "'"$TFC_WORKSPACE"'"
+                }
+              }
+            }' \
+            "https://app.terraform.io/api/v2/organizations/$TFC_ORG/workspaces"
+          echo "Workspace created."
+        elif [ "$response" = "200" ]; then
+          echo "Workspace already exists."
+        else
+          echo "Unexpected response: HTTP $response"
+          cat response.json
+          exit 1
+        fi
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
