@@ -5,7 +5,7 @@ inputs:
   tfc_hostname:
     description: 'HCP Terraform hostname (default: https://app.terraform.io)'
     required: false
-    default: 'https://app.terraform.io'
+    default: 'app.terraform.io'
   tfc_organization:
     description: 'HCP Terraform organization name'
     required: true
