@@ -87,8 +87,16 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        organization: ${{ inputs.tfc_organization }}
+        workspace: ${{ inputs.tfc_workspace }}
         plan: ${{ steps.create-run.outputs.plan_id }}
         token: ${{ inputs.tfc_token }}
+
+    - name: Debug Run Context
+      shell: bash
+      run: |
+        echo "is_speculative: ${{ steps.create-run.outputs.is_speculative }}"
+        echo "is_destroy: ${{ steps.create-run.outputs.is_destroy }}"
 
     - name: Auto Apply (if not speculative or destroy)
       # Ensure run is not from PR or pre-merge context and not a destroy operation.
@@ -96,5 +104,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        organization: ${{ inputs.tfc_organization }}
+        workspace: ${{ inputs.tfc_workspace }}
         run: ${{ steps.create-run.outputs.run_id }}
         token: ${{ inputs.tfc_token }}
