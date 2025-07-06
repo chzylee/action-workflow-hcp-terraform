@@ -80,7 +80,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
-        token: ${{ secrets.TF_API_TOKEN }}
+        token: ${{ inputs.tfc_token }}
         organization: ${{ inputs.tfc_organization }}
         workspace: ${{ inputs.tfc_workspace }}
         directory: ${{ inputs.terraform_directory }}
@@ -90,7 +90,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
-        token: ${{ secrets.TF_API_TOKEN }}
+        token: ${{ inputs.tfc_token }}
         organization: ${{ inputs.tfc_organization }}
         workspace: ${{ inputs.tfc_workspace }}
         message: 'Triggered via GitHub Actions'
@@ -99,7 +99,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
-        token: ${{ secrets.TF_API_TOKEN }}
+        token: ${{ inputs.tfc_token }}
         organization: ${{ inputs.tfc_organization }}
         plan: ${{ steps.create-run.outputs.plan_id }}
 
@@ -109,12 +109,12 @@ runs:
         echo "is_speculative: ${{ steps.create-run.outputs.is_speculative }}"
         echo "is_destroy: ${{ steps.create-run.outputs.is_destroy }}"
         echo "run_id=${{ steps.create-run.outputs.run_id }}"
-        echo "TF_API_TOKEN is set: ${TF_API_TOKEN:+yes}"
+        echo "tfc_token is set: ${{ inputs.tfc_token != '' && 'yes' || 'no' }}"
 
     - name: Auto Apply
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
-        token: ${{ secrets.TF_API_TOKEN }}
+        token: ${{ inputs.tfc_token }}
         organization: ${{ inputs.tfc_organization }}
         run: ${{ steps.create-run.outputs.run_id }}
