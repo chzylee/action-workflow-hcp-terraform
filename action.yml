@@ -76,14 +76,11 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Export TF_API_TOKEN to environment
-      shell: bash
-      run: echo "TF_API_TOKEN=${{ inputs.tfc_token }}" >> $GITHUB_ENV
-
     - name: Upload Terraform Configuration
       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        token: ${{ secrets.TF_API_TOKEN }}
         organization: ${{ inputs.tfc_organization }}
         workspace: ${{ inputs.tfc_workspace }}
         directory: ${{ inputs.terraform_directory }}
@@ -93,6 +90,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        token: ${{ secrets.TF_API_TOKEN }}
         organization: ${{ inputs.tfc_organization }}
         workspace: ${{ inputs.tfc_workspace }}
         message: 'Triggered via GitHub Actions'
@@ -101,6 +99,7 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        token: ${{ secrets.TF_API_TOKEN }}
         organization: ${{ inputs.tfc_organization }}
         plan: ${{ steps.create-run.outputs.plan_id }}
 
@@ -116,5 +115,6 @@ runs:
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
       with:
         hostname: ${{ inputs.tfc_hostname }}
+        token: ${{ secrets.TF_API_TOKEN }}
         organization: ${{ inputs.tfc_organization }}
         run: ${{ steps.create-run.outputs.run_id }}
