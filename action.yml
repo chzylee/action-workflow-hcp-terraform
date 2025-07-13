@@ -76,6 +76,11 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set TFE_TOKEN env var
+      env:
+        TFE_TOKEN: ${{ inputs.tfc_token }}
+      run: echo "TFE_TOKEN is set"
+
     - name: Upload Terraform Configuration
       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
@@ -110,6 +115,7 @@ runs:
         echo "is_destroy: ${{ steps.create-run.outputs.is_destroy }}"
         echo "run_id=${{ steps.create-run.outputs.run_id }}"
         echo "tfc_token is set: ${{ inputs.tfc_token != '' && 'yes' || 'no' }}"
+        echo "TFE_TOKEN env var is set: ${{ env.TFE_TOKEN != '' && 'yes' || 'no' }}"
 
     - name: Auto Apply
       uses: hashicorp/tfc-workflows-github/actions/apply-run@v1.3.2
