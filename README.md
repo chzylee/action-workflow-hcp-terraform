@@ -4,7 +4,9 @@ Reusable Workflow for GitHub Actions to start HCP Terraform runs for a workspace
 
 ## Usage
 
-This repository provides a reusable GitHub Actions workflow for running Terraform operations using HCP Terraform. You can call this workflow from another repository using the `workflow_call` event.
+**This workflow assumes the given HCP Workspace exists already.**
+
+This repository provides a reusable GitHub Actions workflow for running Terraform operations using HCP Terraform. Follow the example below to see how to use this action in a GitHub Action.
 
 ### Example
 
