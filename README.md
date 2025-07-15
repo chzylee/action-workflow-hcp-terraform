@@ -1,6 +1,6 @@
-# action-workflow-hcp-terraform
+# action-workflow-hcp-terraform-run
 
-Reusable Workflow for GitHub Actions to run Terraform via HCP Terraform
+Reusable Workflow for GitHub Actions to start HCP Terraform runs for a workspace.
 
 ## Usage
 
@@ -18,7 +18,7 @@ on:
 
 jobs:
   deploy:
-    uses: chzylee/action-workflow-hcp-terraform/.github/workflows/action_terraform.yml@v1.0.0
+    uses: chzylee/action-workflow-hcp-terraform-run/.github/workflows/action_terraform.yml@v1.0.0
     with:
       environment: 'dev'
       tfcode_path: './terraform'
