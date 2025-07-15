@@ -26,11 +26,6 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set TFE_TOKEN env var
-      env:
-        TFE_TOKEN: ${{ inputs.tfc_token }}
-      run: echo "TFE_TOKEN is set"
-
     - name: Upload Terraform Configuration
       uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
       with:
